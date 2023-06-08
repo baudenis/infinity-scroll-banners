@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 ```
-#the JS code here:
+The JS code here:
 ```
 // Get the current height of the "sidebarParent" div
         let sidebarParent = document.querySelector('.sidebarParent');
