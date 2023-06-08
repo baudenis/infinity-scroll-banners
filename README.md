@@ -1,2 +1,161 @@
 # infinity-scroll-banners
 Wordpress main page infinity scroll banner integration.
+You can find the example here: http://danielius.net/ by scrolling down to the bottom of page.
+
+The infinity scroller script generates 4 posts each time the user reaches the bottom of page. Each 4 posts banner is inserted.
+
+Script below is used to insert a 728x90 or 300x250 banner, depending if it's desktop or mobile, each time infinity scroller loads posts.
+Script also checks sidebarheight, so sidebar banner remains sticky throughout the entire time user is scrolling.
+
+# Create a new js file in theme directory. The JS code goes as following:
+
+```
+
+let counter = 1; // Define the counter variable for banner ID's
+
+function createBannerDiv(post) {
+    // Create a new <div> element
+    let bannerDiv = document.createElement('div');
+
+    // Assign a unique ID and CSS to the new <div> element
+    bannerDiv.id = `danielius_net_between_infinity_${counter}`;
+    bannerDiv.style.cssText="text-align: center; margin-top: 10px; margin-bottom: 10px;";
+
+    // Create banner script element
+    let bannerScript = document.createElement('script');
+    bannerScript.type = "text/javascript";
+    bannerScript.async = true;
+
+    // Create the banner script
+    if(window.innerWidth > 1200) {
+        let bannerScriptText = document.createTextNode(
+            "inView('#danielius_net_between_infinity_" +
+            counter +
+            "').once('enter', (function() {googletag.defineSlot('/147246189,21905331117/danielius.net_728x90_between_content', [[728,90]], 'danielius_net_between_infinity_" +
+            counter +
+            "').addService(googletag.pubads()); googletag.display('danielius_net_between_infinity_" +
+            counter +
+            "'); stpd.initializeAdUnit('danielius_net_between_infinity_" +
+            counter +
+            "');}));"
+        );
+        // Append the script text to the script element
+        bannerScript.appendChild(bannerScriptText);
+
+        // Get the current height of the "sidebarParent" div
+        let sidebarParent = document.querySelector('.sidebarParent');
+        let currentHeight = sidebarParent.offsetHeight;
+
+        // Calculate the new height
+        let newHeight = currentHeight + 1230;
+
+        // Set the new height as a style property of the banner div
+        sidebarParent.style.height = `${newHeight}px`;
+    } else {
+        let bannerScriptText = document.createTextNode(
+            "inView('#danielius_net_between_infinity_" +
+            counter +
+            "').once('enter', (function() {googletag.defineSlot('/147246189,21905331117/danielius.net_300x250_mobile_general', [[300,250]], 'danielius_net_between_infinity_" +
+            counter +
+            "').addService(googletag.pubads()); googletag.display('danielius_net_between_infinity_" +
+            counter +
+            "'); stpd.initializeAdUnit('danielius_net_between_infinity_" +
+            counter +
+            "');}));"
+        );
+        // Append the script text to the script element
+        bannerScript.appendChild(bannerScriptText);
+    }
+
+
+
+
+    // Append the banner script to the banner div
+    bannerDiv.appendChild(bannerScript);
+
+    // Append the banner div after the current "infinity-posts" element
+    post.insertAdjacentElement('afterend', bannerDiv);
+
+    // Increment the counter for the next iteration
+    counter++;
+}
+
+function observeInfinityPosts() {
+    // Find all elements with class "alm-reveal"
+    let infinityPosts = document.querySelectorAll('.alm-reveal');
+
+    // Create a new MutationObserver
+    let observer = new MutationObserver(function(mutationsList, observer) {
+        for (let mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                for (let addedNode of mutation.addedNodes) {
+                    if (addedNode.classList && addedNode.classList.contains('alm-reveal')) {
+                        createBannerDiv(addedNode);
+                    }
+                }
+            }
+        }
+    });
+
+    // Observe changes to the body element
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Track updates to the HTML when ".alm-reveal" elements appear
+    observeInfinityPosts();
+});
+
+```
+#the JS code here:
+```
+// Get the current height of the "sidebarParent" div
+        let sidebarParent = document.querySelector('.sidebarParent');
+        let currentHeight = sidebarParent.offsetHeight;
+
+        // Calculate the new height
+        let newHeight = currentHeight + 1230;
+
+        // Set the new height as a style property of the banner div
+        sidebarParent.style.height = `${newHeight}px`;
+
+```
+
+Is used for sidebar banner element to keep track of content height so it always remains sticky;
+the "let newHeight = currentHeight + 1230;" calculates height.
+1230 value is the height of posts generated by the infinity scroller script, that's why the it's hardcoded because it never changes.
+Another way to insert the height is to get the class name of the inserted posts and add it, for example:
+
+```
+// Get the current height of the "sidebarParent" div
+    let sidebarParent = document.querySelector('.sidebarParent');
+    let currentHeight = sidebarParent.offsetHeight;
+// Get the generated posts height:
+    let generatedPosts = document.querySelector('.generated-posts-classname');
+    let generatedPostsHeight = generatedPosts.offsetHeight;
+
+    // Calculate the new height
+    let newHeight = currentHeight + generatedPostsHeight;
+
+    // Set the new height as a style property of the banner div
+    sidebarParent.style.height = `${newHeight}px`;
+
+```
+
+
+# enqueue script in functions.php:
+
+```
+/** Infinity scroller banners */
+function enqueue_custom_scripts()
+{
+    wp_enqueue_script('custom-script', get_stylesheet_directory_uri() . '/js/infinityScrollBannerLoader.js', array(), '1.0', true);
+}
+
+add_action('wp_enqueue_scripts', 'enqueue_custom_scripts');
+```
+get_stylesheet_directory_uri() - if child theme;
+get_template_directory_uri() - if no child theme is present;
+
+'/js/infinityScrollBannerLoader.js' - path to JS file.
+
